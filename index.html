@@ -1,0 +1,277 @@
+<meta charset="utf-8" emacsmode="-*- markdown -*-"><link rel="stylesheet" href="https://casual-effects.com/markdeep/latest/apidoc.css?">
+
+                          <font color='blue'> **SolverM**</font> 
+
+
+
+<p><b>SolverM:</b> is an efficient GPU-based <b>Solver</b> for <b>M</b>axwell's equations in 
+computational electromagnetics.</p>
+
+
+
+## <font color='blue'>**Introduction**</font> 
+
+Understanding and controlling the interaction between light and matter 
+is crucial for physics and engineers. Despite ongoing efforts to develop numerical
+techniques and deep learning approaches for forward simulation and inverse scattering problems, efficiently 
+solving for three-dimensional (3D) complex systems remains challenges.          
+
+
+<p align="center">
+  <img src="images/Challenges.png" alt="Your Image Caption" width="80%">
+</p>
+
+
+**SolverM:** is an accurate and fast Solver for Maxwell's equations.
+        
+    
+- SolverM enables ultrafast simulations through GPU accelerations without requiring discretization of the additional time dimension or involving eigen problems. 
+                               
+- SolverM is effcient for simulating both subwavelength gratings and large-scale structures, delivering high performance for accurate applications in optical metrology, computational lithography. It also enables efficient simulation of large-scale
+         metasurfaces and facilitates the design of photonic structures
+   
+       
+## <font color='blue'>**Benchmark**</font> 
+The following sections provide examples and benchmarks for SolverM. Validation of SolverM is 
+conducted through published documentations and comparison with electromagnetic software such 
+as <a href="https://meep.readthedocs.io/en/latest/"target="_blank"> 
+Meep (open source-FDTD). </a> and  
+<a href="https://www.flexcompute.com/tidy3d/solver/"target="_blank"> 
+Tidy3D (GPU-FDTD).</a>  
+
+However, it's important to note that **comparisons are relative**, as variations in numerical 
+efficiency can arise from differences in simulation methods, programming languages, 
+simulation targets, computer resources... Our primary objective is to develop efficient 
+solutions for complex 3D nanostructures.
+
+In highlighted benchmarks, SolverM showcases impressive performance, being two-order and three-order 
+magnitude faster in <a href="#showcase1"> plasmonic sensor</a> and  
+<a href="#showcase2"> lithography imaging</a> applications.
+SolverM completes the theoretical inverse problem of <a href="#showcase3"> 2D-gratings</a>
+just 1 second. For <a href="#showcase4"> micro-nanostructure arrays</a>, SolverM requires 2s for simulating 
+optical reponses. 
+
+
+## <font color='blue'>**Periodic structures**</font> 
+
+<!--In simulating periodic structures, Rigorous Coupled Wave Analysis (RCWA) is commonly used due 
+to its efficiency in handling the inherent periodicity of such structures. However, RCWA's 
+requirement of solving eigenproblems may present challenges when tackling complex 3D multilayers.
+
+In the following examples and benchmarks, we showcase SolverM's outperformance of RCWA 
+in forward simulations and solving inverse problems for periodic structures.-->
+
+<a name="showcase1"></a> 
+### Plasmonic sensor 
+
+We demonstrate a plasmonic sensor simulation in 
+<a href="https://opg.optica.org/oe/fulltext.cfm?uri=oe-29-22-36201&id=461916"target="_blank"> 
+on Schlipf and Inga A. Fischer, Optics express, 2021. </a>
+The plasmonic sensor is composed of metallic nanoarrays on bottom homogeneous layers.
+               
+In SolverM, a structure is presented through its layer components.                        
+A grating layer is defined by three attributes: mask, base material, 
+and grating material, while a homogeneous layer is defined by mask and 
+base material. In the plasmonic sensor, the metallic nanoarray is defined:                        
+                                            
+```python
+
+layer['mask']=SM.Geometry.Circle(CD=Diameter,Cx=Lx/2,Cy=Ly/2)  # nanohole       
+layer['grating']={'eps': e_water,'name':'water'}               # nanohole in water
+layer['base']={'eps': e_Al,'name':'Al'}  
+
+
+```   
+                   
+and the homogeneous layer is defined:           
+
+
+
+```python
+
+layer['mask']=SM.Geometry.Homo()  
+layer['base']={'eps': e_SiO2,'name':'SiO2'}
+
+
+```   
+                     
+To verify the geometry before performing simulations, SolverM offers 
+visualization of the defined geometry in the XY, XZ, and YZ planes. 
+Nanostructure dimensions are presented in pixel length (user define).                          
+In the XY plane, SolverM provides the option to display either all layers 
+or specific layers of interest within a structure
+                
+                         
+```python
+
+SM.Geometry.XY(Geometry,pos_layer=[0,1,2,3])  
+                       
+```   
+<p align="center">
+  <img src="images/XY_plasmonic_sensor.png" width="80%">
+</p>
+                     
+```python
+
+SM.Geometry.XZ_YZ(Geometry)  
+                    
+``` 
+<p align="center">
+  <img src="images/XZ_YZ_plasmonic_sensor.png"  width="80%">
+</p>                 
+                         
+**Simulation time:** 
+SolverM requires less than 1s for *standard resolution*, and 5s for *fine resolution* 
+to compute optical responses at 81 wavelength points: Reflectance, Transmittance and Absorbance of 
+the 3D-plasmonic structure in water. SolverM is two orders of magnitude  faster than                      
+<a href="https://opg.optica.org/oe/fulltext.cfm?uri=oe-29-22-36201&id=461916"target="_blank"> 
+RCWA simulation developed by Jon Schlipf and Inga A. Fischer, Optics express, 2021. </a>                         
+ 
+<p align="center">
+  <img src="images/RT_plasmonic_sensor.png" width="30%">
+</p> 
+                                        
+<a name="showcase2"></a>                          
+### Plasmonic Lithography
+In this benchmark, we implement a plasmonic lithography imaging model. 
+The plasmonic structure utilized is adapted from
+     <a href="https://opg.optica.org/oe/fulltext.cfm?uri=oe-31-22-36061&id=540771"target="_blank"> 
+     Ding et al.,Optic express, 2023.</a>
+      
+A customized mask is used to define the T-shaped pattern.
+
+```python
+
+layer_lth['mask_uf']=customized T-mask           
+layer_lth['grating']={'eps': e_PMMA,'name':'PMMA'}
+layer_lth['base']={'eps': e_Cr,'name':'Cr'}  
+                    
+``` 
+<p align="center">
+  <img src="images/XY_plasmonic_lithography.png" width="80%">
+</p>                                    
+
+**Simulation time:**
+SolverM requires less than 1s to compute the electric field of the 3D-plasmonic lithography structure,  
+making it 1000 times faster than Ansys and 400 times faster than 
+    <a href="https://opg.optica.org/oe/fulltext.cfm?uri=oe-31-22-36061&id=540771"target="_blank"> 
+    RCWA simulation developed by Ding et al.,Optic express, 2023.</a>   
+  
+<p align="center">
+  <img src="images/E_field_plasmonic_lithography.png" width="30%">
+</p> 
+
+### Mueller Matrix Ellipsometry-Si gratings
+In the example,  we reproduce the Mueller matrix obtained from ellipsometry measurement 
+of 2D Si gratings, adapted from
+<a href="https://www.researchgate.net/publication/315804617_Comparison_of_spectroscopic_Mueller_polarimetry_standard_scatterometry_and_real_space_imaging_techniques_SEM_and_3D-AFM_for_dimensional_characterization_of_periodic_structures"target="_blank"> 
+Martino et al.,SPIE Proc,2008.</a>  
+ 
+
+<p align="center">
+  <img src="images/Si_grating_MM.png" width="30%">
+</p> 
+
+Mueller matrix ellipsometry is a non-dectructive, non-Contactct measurement technique to characterize 
+nanostructures.
+By measuring all polarizing states of the sample, Mueller matrix ellipsometry is very 
+sensitive to optical responses and has been extensively used for optical metrology applications.
+
+The simulation of Mueller matrix ellipsometry  is essential for solving inverse 
+problems to reconstruct nanostructures from the measurement. 
+
+**Simulation time:** 
+SolverM requires about 1s to compute the Mueller matrix of AOI=45, Azimuth
+=[0, 15, 30, 45, 60, 75, 90].
+
+<p align="center">
+  <img src="images/MM_Si_gratings.png" width="60%">
+</p> 
+
+<a name="showcase3"></a>
+### 2D-Photoresist
+
+In the given example, SolverM is used to solve the theoretical inverse problem of spectroscopic 
+ellipsometry applied to 2D photoresist structures in
+<a href="https://www.sciencedirect.com/science/article/abs/pii/S0040609015001224"target="_blank"> 
+Liu et al.,Thin Solid Films,2015.</a>  
+
+
+<p align="center">
+  <img src="images/Resist_2D.png" width="40%">
+</p> 
+
+The optical properties of BARC and photoresist are calculated using Forouhi model and Tauc-Lorentz 
+model, respectively. The Mueller matrix in the following figure is simulated based on 
+a structure with a photoresist thickness of 115 nm, a BARC thickness of 310 nm, and a critical 
+dimension (CD) of 200 nm. It is noted that at azimuth=0, the off-diagonal 
+Mueller ellements are zero. 
+
+<p align="center">
+  <img src="images/Resist_2D_MM.png" width="60%">
+</p> 
+
+For the theorical inverse problem, initial parameters are randomly chosen, and the 
+Levenberg-Marquardt algorithm is employed for iterative optimizations. The theoretical 
+inverse problem involving three parameters typically requires approximately 1 second to converge.
+However,it is noted that this benchmark does not reflect practical applications 
+where challenges such as measurement noise, complex geometries arising from fabrication 
+constraints... must be addressed.
+
+## <font color='blue'>**Large structures**</font> 
+
+<!--Simulating large structures continues to pose challenges, primarily due to the extensive 
+simulation domain involved. The Finite Difference Time Domain (FDTD) method is commonly 
+employed due to its simplicity and efficient parallelization on GPUs. However, FDTD necessitates 
+additional time-domain considerations that may require substantial computational resources
+and result in time-consuming simulations, particularly for large structures.
+
+In the following examples and benchmarks, we showcase SolverM's capability in addressing 
+the simulation of large nanostructures.-->
+<a name="showcase4"></a>
+### GaN_GradientMetasurface        
+In the benchmark, we reproduce the diffraction efficiency of μm-scale 3D metasurface arrays in                    
+<a href="https://www.nature.com/articles/s41598-019-53878-9"target="_blank"> 
+Elsawy et al.,Scientific Reports ,2019.</a>      
+
+SolverM displays the metasurface array in pixels for simulations:
+
+<p align="center">
+  <img src="images/GaN_structure.png" width="60%" >
+</p> 
+
+**Simulation time:** 
+It takes approximately 2s to compute the Transmittance and Diffraction Efficiency for 
+the first order of the TM polarized wave.      
+
+<p align="center">
+  <img src="images/GaN_Trans_DE.png" width="80%" >
+</p> 
+
+## <font color='blue'>**Film stack**</font> 
+
+## <font color='red'>**Issues**</font> 
+### <font color='red'>3D Visualization</font> 
+
+I'm currently developing a 3D interactive visualization tool for nanostructures using Plotly. 
+While Plotly's Mesh3D is used for representing cubes and Surface for cylinders, I'm encountering 
+an issue with legends where their shapes differ. In this example, the legend for 'air' and the
+legend for 'SiN' are different. The reason is that Plotly automatically differentiates the 
+legends based on the plot type (Mesh3D and Surface).
+
+Do you have any suggestions on how to customize legend shapes in 3D Plotly
+
+ 
+<p align="center">
+  <img src="images/issue_3D_Viz.png" width="50%" >
+</p> 
+
+## <font color='blue'>**Contact**</font> 
+While SolverM demonstrates impressive performance, it is still in its early stages and requires further development. 
+Please feel free to reach out for more information: 
+  
+**Email:** phamhoanglam.fr@gmail.com
+
+
+<style class="fallback">body{visibility:hidden}</style><script>markdeepOptions={tocStyle:'medium'};</script>
+<!-- Markdeep: --><script src="https://casual-effects.com/markdeep/latest/markdeep.min.js?" charset="utf-8"></script>
