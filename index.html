@@ -23,9 +23,9 @@ solving for three-dimensional (3D) complex systems remains challenges.
 **SolverM:** is an accurate and fast Solver for Maxwell's equations.
         
     
-- SolverM enables ultrafast simulations through GPU accelerations without requiring discretization of the additional time dimension or involving eigen problems. 
+- SolverM enables ultrafast simulations through GPU accelerations without requiring discretization of the additional time dimension or involving eigenproblems. 
                                
-- SolverM is effcient for simulating both subwavelength gratings and large-scale structures, delivering high performance for accurate applications in optical metrology, computational lithography. It also enables efficient simulation of large-scale
+- SolverM is efficient for simulating both subwavelength gratings and large-scale structures, delivering high performance for accurate applications in optical metrology, computational lithography. It also enables efficient simulation of large-scale
          metasurfaces and facilitates the design of photonic structures
    
        
@@ -57,12 +57,12 @@ in forward simulations and solving inverse problems for periodic structures.
 We demonstrate a plasmonic sensor simulation in 
 <a href="https://opg.optica.org/oe/fulltext.cfm?uri=oe-29-22-36201&id=461916"target="_blank"> 
 on Schlipf and Inga A. Fischer, Optics express, 2021. </a>
-The plasmonic sensor is composed of metalic nanoarrays on bottom homogeneous layers.
+The plasmonic sensor is composed of metallic nanoarrays on bottom homogeneous layers.
                
 In SolverM, a structure is presented through its layer components.                        
 A grating layer is defined by three attributes: mask, base material, 
 and grating material, while a homogeneous layer is defined by mask and 
-base material. In the plasmonic sensor, the metalic nanoarray is defined:                        
+base material. In the plasmonic sensor, the metallic nanoarray is defined:                        
                                             
 ```python
 
@@ -73,9 +73,7 @@ layer['base']={'eps': e_Al,'name':'Al'}
 
 ```   
                    
-and the homogeneous layer is defined:           
-
-
+and the homogeneous layer is defined:
 
 ```python
 
@@ -161,7 +159,7 @@ Martino et al.,SPIE Proc,2008.</a>
   <img src="images/Si_grating_MM.png" width="30%">
 </p> 
 
-Mueller matrix ellipsometry is a non-dectructive, non-contanct measurement technique to characterize 
+Mueller matrix ellipsometry is a non-destructive, non-contact measurement technique to characterize 
 nanostructures.
 By measuring all polarizing states of the sample, Mueller matrix ellipsometry is very 
 sensitive to optical responses and has been extensively used for optical metrology applications.
@@ -199,10 +197,10 @@ Mueller ellements are zero.
   <img src="images/Resist_2D_MM.png" width="60%">
 </p> 
 
-For the theorical inverse problem, initial parameters are randomly chosen, and the 
+For the theoretical inverse problem, initial parameters are randomly chosen, and the 
 Levenberg-Marquardt algorithm is employed for iterative optimizations. The theoretical 
 inverse problem involving three parameters typically requires approximately 1 second to converge.
-However,it is noted that this benchmark does not reflect practical applications 
+However, it is noted that this benchmark does not reflect practical applications 
 where challenges such as measurement noise, complex geometries arising from fabrication 
 constraints... must be addressed.
 
