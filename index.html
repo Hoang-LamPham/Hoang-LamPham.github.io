@@ -1,0 +1,211 @@
+<meta charset="utf-8" emacsmode="-*- markdown -*-"><link rel="stylesheet" href="https://casual-effects.com/markdeep/latest/apidoc.css?">
+
+                          <font color='blue'> **SolverM**</font> 
+
+
+
+<p><b>SolverM:</b> is an efficient GPU-based <b>Solver</b> for <b>M</b>axwell's equations in 
+computational electromagnetics.</p>
+
+
+
+## <font color='blue'>**Introduction**</font> 
+
+Understanding and controlling the interaction between light and matter 
+is crucial for physics and engineers. Despite ongoing efforts to develop numerical
+techniques and deep learning approaches for forward simulation and inverse scattering problems, efficiently 
+solving for three-dimensional (3D) complex systems remains challenges.          
+
+
+<p align="center">
+  <img src="images/Challenges.png" alt="Your Image Caption" width="80%">
+</p>
+
+
+**SolverM:** is an accurate and fast Solver for Maxwell's equations.
+        
+    
+- SolverM enables ultrafast simulations through GPU accelerations without requiring discretization of the additional time dimension or involving eigen problems. 
+                               
+- SolverM is effcient for simulating both subwavelength gratings and large-scale structures, delivering high performance for accurate applications in optical metrology, computational lithography. It also enables efficient simulation of large-scale
+metasurfaces and facilitates the design of photonic structures.
+   
+       
+## <font color='blue'>**Benchmark**</font> 
+The following sections provide examples and benchmarks for SolverM. Validation of SolverM is 
+conducted through published documentations. However, it's important to note that **comparisons are relative**, as variations in numerical 
+efficiency can arise from differences in simulation methods, programming languages, 
+simulation targets, computer resources... Our primary objective is to develop efficient 
+solutions for complex 3D nanostructures.
+
+## <font color='blue'>**Plasmonic sensor **</font>
+
+We present a plasmonic sensor simulation in 
+<a href="https://opg.optica.org/oe/fulltext.cfm?uri=oe-29-22-36201&id=461916"target="_blank"> 
+on Schlipf and Inga A. Fischer, Optics express, 2021. </a>
+The plasmonic sensor is composed of metallic nanoarrays on bottom homogeneous layers.               
+In SolverM, a structure is presented through its layer components.                        
+A grating layer is defined by three attributes: mask, base material, 
+and grating material, while a homogeneous layer is defined by mask and 
+base material. In the plasmonic sensor, the metallic nanoarray is defined:                        
+                                            
+```python
+
+layer['mask']=SM.Geometry.Circle(CD=Diameter,Cx=Lx/2,Cy=Ly/2)  # nanohole       
+layer['grating']={'eps': e_water,'name':'water'}               # nanohole in water
+layer['base']={'eps': e_Al,'name':'Al'}  
+
+
+```   
+                   
+and the homogeneous layer is defined:           
+
+
+
+```python
+
+layer['mask']=SM.Geometry.Homo()  
+layer['base']={'eps': e_SiO2,'name':'SiO2'}
+
+
+```   
+                     
+To verify the geometry before performing simulations, SolverM offers 
+visualization of the defined geometry in the XY, XZ, and YZ planes. 
+Nanostructure dimensions are presented in pixel length (user define).                          
+In the XY plane, SolverM provides the option to display either all layers 
+or specific layers of interest within a structure
+                
+                         
+```python
+
+SM.Geometry.XY(Geometry,pos_layer=[0,1,2,3])  
+                       
+```   
+<p align="center">
+  <img src="images/XY_plasmonic_sensor.png" width="80%">
+</p>
+                     
+```python
+
+SM.Geometry.XZ_YZ(Geometry)  
+                    
+``` 
+<p align="center">
+  <img src="images/XZ_YZ_plasmonic_sensor.png"  width="80%">
+</p>                 
+                         
+**Simulation time:** 
+SolverM requires less than 1s for *standard resolution*, and 5s for *fine resolution* 
+to compute optical responses at 81 wavelength points: Reflectance, Transmittance and Absorbance of 
+the 3D-plasmonic structure in water. SolverM is two orders of magnitude  faster than than the method                    
+<a href="https://opg.optica.org/oe/fulltext.cfm?uri=oe-29-22-36201&id=461916"target="_blank"> 
+described in this study.. </a>                         
+ 
+<p align="center">
+  <img src="images/RT_plasmonic_sensor.png" width="30%">
+</p> 
+                                        
+## <font color='blue'>**Mueller Matrix Ellipsometry-Si gratings **</font>
+In the example,  we reproduce the Mueller matrix obtained from ellipsometry measurement 
+of 2D Si gratings, adapted from
+<a href="https://www.researchgate.net/publication/315804617_Comparison_of_spectroscopic_Mueller_polarimetry_standard_scatterometry_and_real_space_imaging_techniques_SEM_and_3D-AFM_for_dimensional_characterization_of_periodic_structures"target="_blank"> 
+Martino et al.,SPIE Proc,2008.</a>  
+ 
+
+<p align="center">
+  <img src="images/Si_grating_MM.png" width="30%">
+</p> 
+
+Mueller matrix ellipsometry is a non-dectructive, non-contactct measurement technique to characterize 
+nanostructures.
+By measuring all polarizing states of the sample, Mueller matrix ellipsometry is very 
+sensitive to optical responses and has been extensively used for optical metrology applications.
+
+The simulation of Mueller matrix ellipsometry  is essential for solving inverse 
+problems to reconstruct nanostructures from the measurement. 
+
+**Simulation time:** 
+SolverM requires about 1s to compute the Mueller matrix of AOI=45, Azimuth
+=[0, 15, 30, 45, 60, 75, 90].
+
+<p align="center">
+  <img src="images/MM_Si_gratings.png" width="60%">
+</p> 
+
+## <font color='blue'>**GaN super cell**</font>       
+In the benchmark, we reproduce the diffraction efficiency of μm-scale 3D metasurface arrays in                    
+<a href="https://www.nature.com/articles/s41598-019-53878-9"target="_blank"> 
+Elsawy et al., Scientific Reports, 2019.</a>    
+
+A customized mask is used to define the GaN super cell pattern.
+
+```python
+
+layer_lth['mask_uf']=customized mask           
+layer_lth['grating']={'eps': e_GaN,'name':'GaN'}
+layer_lth['base']={'eps': e_air,'name':'air'}  
+                    
+```   
+
+SolverM displays the GaN super cell in pixels (1 pixel =1 nm) for the simulation. 
+
+<p align="center">
+  <img src="images/GaN_structure.png" width="60%" >
+</p> 
+
+**Simulation time:** 
+It takes approximately 2s to compute the Transmittance and Diffraction Efficiency for 
+the first order of the TM polarized wave.      
+
+<p align="center">
+  <img src="images/GaN_Trans_DE.png" width="80%" >
+</p> 
+ 
+## <font color='blue'>**Automatic differentiation**</font>  
+
+In computational electromagnetics, numerical gradients are often necessary for optimizations 
+to solve inverse scattering problems. SolverM is implemented using the PyTorch framework, 
+which allows for automatic differentiation with just a few lines of code.
+
+
+In the following example, SolverM computes the numerical gradient of transmittance 
+with respect to geometric parameters of a silicon layer a silicon (Si) layer:
+ 
+<p align="center">
+  <img src="images/Si_atom.png" width="20%" >
+</p> 
+
+SolverM uses just a few lines of code to compute the numerical gradients.By leveraging PyTorch's 
+requires_grad and backward functions, SolverM can efficiently compute the gradients of 
+transmittance with respect to various geometric parameters (height, width in the x direction, 
+and width in the y direction.
+
+```python
+
+parameters=torch.tensor([h,Wx,Wy], requires_grad=True)
+T=Sim(parameters)
+T.backward(retain_graph=True)    
+with torch.no_grad():
+    grad=parameters.grad    
+    parameters.grad=None     
+                    
+```   
+Automatic differentiation is almost identical to numerical gradients 
+using the central difference scheme, but it is two times faster in terms of simulation time.
+
+
+<p align="center">
+  <img src="images/Si_gradient.png" width="80%" >
+</p> 
+
+
+## <font color='blue'>**Contact**</font> 
+While SolverM demonstrates impressive performances, it is still in its early stages and requires further development. 
+Please feel free to reach out for more information: 
+  
+**Email:** phamhoanglam.fr@gmail.com
+
+
+<style class="fallback">body{visibility:hidden}</style><script>markdeepOptions={tocStyle:'medium'};</script>
+<!-- Markdeep: --><script src="https://casual-effects.com/markdeep/latest/markdeep.min.js?" charset="utf-8"></script>
