@@ -7,14 +7,11 @@
 <p><b>SolverM:</b> is an efficient GPU-based <b>Solver</b> for <b>M</b>axwell's equations in 
 computational electromagnetics.</p>
 
-
-
 ## <font color='blue'>**Introduction**</font> 
 
 Understanding and controlling the interaction between light and matter 
 is crucial for physics and engineers. Despite ongoing efforts to develop numerical
-techniques and deep learning approaches for forward simulation and inverse scattering problems, efficiently 
-solving for three-dimensional (3D) complex systems remains challenges.          
+techniques and deep learning approaches for forward simulation and inverse scattering problems, efficiently solving for three-dimensional (3D) complex systems remains challenges.          
 
 
 <p align="center">
@@ -27,16 +24,12 @@ solving for three-dimensional (3D) complex systems remains challenges.
     
 - SolverM enables ultrafast simulations through GPU accelerations without requiring discretization of the additional time dimension or involving eigen problems. 
                                
-- SolverM is effcient for simulating both subwavelength gratings and large-scale structures, delivering high performance for accurate applications in optical metrology, computational lithography. It also enables efficient simulation of large-scale
-metasurfaces and facilitates the design of photonic structures.
+- SolverM is efficient for simulating both subwavelength gratings and large-scale structures, delivering high performance for accurate applications in optical metrology, computational lithography. It also enables efficient simulation of large-scale metasurfaces and facilitates the design of photonic structures.
    
        
 ## <font color='blue'>**Benchmark**</font> 
 The following sections provide examples and benchmarks for SolverM. Validation of SolverM is 
-conducted through published documentations. However, it's important to note that **comparisons are relative**, as variations in numerical 
-efficiency can arise from differences in simulation methods, programming languages, 
-simulation targets, computer resources... Our primary objective is to develop efficient 
-solutions for complex 3D nanostructures.
+conducted through published documentations. However, it's important to note that **comparisons are relative**, as variations in numerical efficiency can arise from differences in simulation methods, programming languages, simulation targets, computer resources... Our primary objective is to develop efficient solutions for complex 3D nanostructures.
 
 ## <font color='blue'>**Plasmonic sensor **</font>
 
@@ -55,12 +48,9 @@ layer['mask']=SM.Geometry.Circle(CD=Diameter,Cx=Lx/2,Cy=Ly/2)  # nanohole
 layer['grating']={'eps': e_water,'name':'water'}               # nanohole in water
 layer['base']={'eps': e_Al,'name':'Al'}  
 
-
 ```   
                    
-and the homogeneous layer is defined:           
-
-
+and the homogeneous layer is defined:
 
 ```python
 
@@ -98,7 +88,7 @@ SM.Geometry.XZ_YZ(Geometry)
 **Simulation time:** 
 SolverM requires less than 1s for *standard resolution*, and 5s for *fine resolution* 
 to compute optical responses at 81 wavelength points: Reflectance, Transmittance and Absorbance of 
-the 3D-plasmonic structure in water. SolverM is two orders of magnitude  faster than than the method                    
+the 3D-plasmonic structure in water. SolverM is two orders of magnitude  faster than the method                    
 <a href="https://opg.optica.org/oe/fulltext.cfm?uri=oe-29-22-36201&id=461916"target="_blank"> 
 described in this study.. </a>                         
  
@@ -117,13 +107,9 @@ Martino et al.,SPIE Proc,2008.</a>
   <img src="images/Si_grating_MM.png" width="30%">
 </p> 
 
-Mueller matrix ellipsometry is a non-dectructive, non-contactct measurement technique to characterize 
-nanostructures.
-By measuring all polarizing states of the sample, Mueller matrix ellipsometry is very 
-sensitive to optical responses and has been extensively used for optical metrology applications.
+Mueller matrix ellipsometry is a non-dectructive, non-contactct measurement technique to characterize nanostructures. By measuring all polarizing states of the sample, Mueller matrix ellipsometry is very sensitive to optical responses and has been extensively used for optical metrology applications.
 
-The simulation of Mueller matrix ellipsometry  is essential for solving inverse 
-problems to reconstruct nanostructures from the measurement. 
+The simulation of Mueller matrix ellipsometry  is essential for solving inverse problems to reconstruct nanostructures from the measurement. 
 
 **Simulation time:** 
 SolverM requires about 1s to compute the Mueller matrix of AOI=45, Azimuth
@@ -133,12 +119,10 @@ SolverM requires about 1s to compute the Mueller matrix of AOI=45, Azimuth
   <img src="images/MM_Si_gratings.png" width="60%">
 </p> 
 
-## <font color='blue'>**GaN super cell**</font>       
+## <font color='blue'>**GaN supercell**</font>       
 In the benchmark, we reproduce the diffraction efficiency of μm-scale 3D metasurface arrays in                    
 <a href="https://www.nature.com/articles/s41598-019-53878-9"target="_blank"> 
-Elsawy et al., Scientific Reports, 2019.</a>    
-
-A customized mask is used to define the GaN super cell pattern.
+Elsawy et al., Scientific Reports, 2019.</a> A customized mask is used to define the GaN supercell pattern.
 
 ```python
 
@@ -148,7 +132,7 @@ layer_lth['base']={'eps': e_air,'name':'air'}
                     
 ```   
 
-SolverM displays the GaN super cell in pixels (1 pixel =1 nm) for the simulation. 
+SolverM displays the GaN supercell in pixels (1 pixel =1 nm) for the simulation. 
 
 <p align="center">
   <img src="images/GaN_structure.png" width="60%" >
@@ -166,8 +150,7 @@ the first order of the TM polarized wave.
 
 In computational electromagnetics, numerical gradients are often necessary for optimizations 
 to solve inverse scattering problems. SolverM is implemented using the PyTorch framework, 
-which allows for automatic differentiation with just a few lines of code.
-
+which allows for simple automatic differentiations.
 
 In the following example, SolverM computes the numerical gradient of transmittance 
 with respect to geometric parameters of a silicon layer a silicon (Si) layer:
@@ -176,7 +159,7 @@ with respect to geometric parameters of a silicon layer a silicon (Si) layer:
   <img src="images/Si_atom.png" width="20%" >
 </p> 
 
-SolverM uses just a few lines of code to compute the numerical gradients.By leveraging PyTorch's 
+SolverM uses just a few lines of code to compute the numerical gradients. By leveraging PyTorch's 
 requires_grad and backward functions, SolverM can efficiently compute the gradients of 
 transmittance with respect to various geometric parameters (height, width in the x direction, 
 and width in the y direction.
@@ -191,8 +174,7 @@ with torch.no_grad():
     parameters.grad=None     
                     
 ```   
-Automatic differentiation is almost identical to numerical gradients 
-using the central difference scheme, but it is two times faster in terms of simulation time.
+Automatic differentiation is almost identical to numerical gradients using the central difference scheme, but it is two times faster in terms of simulation time.
 
 
 <p align="center">
