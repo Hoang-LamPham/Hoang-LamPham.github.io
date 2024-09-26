@@ -1,0 +1,499 @@
+<meta charset="utf-8" emacsmode="-*- markdown -*-"><link rel="stylesheet" href="https://casual-effects.com/markdeep/latest/apidoc.css?">
+
+                          <font color='blue'> **SolverM**</font> 
+
+
+
+<p><b>SolverM:</b> an Efficient GPU-accelerated  <b>Solver</b> for <b>M</b>axwell's equations in 
+computational electromagnetics.</p>
+
+
+
+# <font color='blue'>**Introduction**</font> 
+
+Understanding and controlling the interaction between light and matter 
+is crucial for physics and engineers. Despite ongoing efforts to develop numerical
+techniques and deep learning approaches for forward simulation and inverse scattering problems, efficiently 
+solving for three-dimensional (3D) complex systems remains challenges.          
+
+
+<p align="center">
+  <img src="images/Challenges.png" alt="Your Image Caption" width="80%">
+</p>
+
+
+**SolverM:** overcomes existing challenges to peform fast and rigorous simulations. 
+
+For 3D structures with simulation domain < 1 µm x 1 µm x 1 µm, SolverM requires only a few seconds for 
+a rigorous simulation.  This efficiency makes SolverM ideal for  simulating both subwavelength gratings 
+and large-scale structures, providing high performance for accurate applications in optical metrology, computational lithography. 
+It also enables efficient simulation of large-scale metasurfaces and facilitates the design of photonic 
+structures.
+       
+# <font color='blue'>**Tutorial**</font> 
+The following sections provide examples and benchmarks for SolverM. Validation of SolverM is 
+conducted through published documentations. However, it's important to note that **comparisons are relative**, as variations in numerical 
+efficiency can arise from differences in simulation methods, programming languages, 
+simulation targets, computer resources... Our primary objective is to develop efficient 
+solutions for complex 3D nanostructures.
+
+# <font color='blue'>**I. Forward Simulation**</font> 
+
+## <font color='blue'>**1. Basic**</font>   
+
+‘SM.setup()’ function is used to setup simulation conditions by passing key parameters such as
+wavelength_range: list of incident wavelengths, LxLy: periodic lengths, NxNy: simulation domain,
+angle: incident angle and azimuth...
+
+```python
+device=torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+SM=SolverM()
+SM.setup(wavelength_range=wavelength_range,
+         LxLy=[Lx,Ly],          # periodic length
+         NxNy=[Nx,Ny],          # simulation domain  
+         angle=[AOI,Azimuth],   # degree
+         e_ref=e_ref,           # reflectance medium
+         e_trn=e_trn,           # transmittance medium
+         source=source,
+         device=device,
+         dtype=torch.complex128
+         )
+```   
+
+A nanostructure is defined by a list of all component layers. A grating layer is specified by
+mask, grating material, medium material:
+
+```python
+layer['mask']=SM.Geometry.Rectangle(Wx=Wx,Wy=Wy)  
+layer['grating']={'eps': e_Si,'name':'Si'}
+layer['medium']={'eps': e_air,'name':'air'}  
+layer['h']=h
+
+``` 
+
+For a complicated mask that is not in the library (Circle, Rectangle...), a user-defined
+mask is used:
+```python
+layer['mask']=user-defined mask 
+```
+
+A homogeneous layer is simply defined:
+```python
+layer['mask']=SM.Geometry.Homo()  
+layer['medium']={'eps': e_Si,'name':'Si'}
+layer['h']=h
+```
+
+The SolverM also provides geometry visualization to help users verify nanostructures before
+performing simulations. A detailed example of the visualization is presented in the next section.
+
+The main part of the simulation is very simple:
+```python
+SM.sim (Geometry)
+```
+
+Then, we can calculate diffraction coefficients, optical responses: reflectance, transmittance,
+absorbance, electromagnetic field....
+
+## <font color='blue'>**2. Plasmonic sensor **</font>
+
+In the example, SolverM is used to simulate optical responses—Reflectance, Transmittance, and Absorbance of a 
+3D plasmonic biosensing in water.The plasmonic structure consists of Al nanoholes on homogeneous 
+layers of SiO2, Si, and Ge. More details can be found in **Rigorous coupled-wave analysis of a multi-layered plasmonic 
+integrated refractive index sensor** by
+<a href="https://opg.optica.org/oe/fulltext.cfm?uri=oe-29-22-36201&id=461916"target="_blank"> 
+ Schlipf and Inga A. Fischer., 2021. </a>
+ 
+<p align="center"><img src="images/plasmonic_3D.png" width="50%"> </p> 
+ 
+             
+In SolverM, a structure is presented through its layer components.                        
+A grating layer is defined by three attributes: mask, medium material, 
+and grating material, while a homogeneous layer is defined by mask and 
+medium material. The plasmonic structure is defined:                        
+                                            
+```python
+
+e_m=[e_Al,e_SiO2,e_Si,e_Ge] #   
+material_name=['Al','SiO2','Si','Ge']
+
+Geometry=[]
+for lth in range(NL):
+    layer_lth={}      
+    if lth ==0:
+        layer_lth['mask']=SM.Geometry.Circle(CD=Diameter)        
+        layer_lth['grating']={'eps': e_water,'name':'water'}
+        layer_lth['medium']={'eps': e_m[lth],'name':material_name[lth]}  
+        layer_lth['h']=h_Sim[lth]
+    else:
+        layer_lth['mask']=SM.Geometry.Homo()  
+        layer_lth['medium']={'eps': e_m[lth],'name':material_name[lth]}
+        layer_lth['h']=h_Sim[lth]
+    Geometry.append(layer_lth)    
+
+
+```     
+                     
+To verify the geometry before performing simulations, SolverM offers 
+visualization of the defined geometry in the XY, XZ, and YZ planes. 
+Nanostructure dimensions are presented in pixel length (user define based on simulation domain).                          
+In the XY plane, SolverM provides the option to display either all layers 
+or specific layers of interest within  structure
+                                      
+                 
+The color_uf is used to customize visualization with user-defined colors.  
+
+```python
+color_uf=['lime','brown','cyan','blue','gray']
+
+SM.Geometry.XY(Geometry,pos_layer=[0,1,2,3],color=color_uf)  
+SM.Geometry.XZ_YZ(Geometry,color=color_uf)                     
+```
+
+<p align="center"> <img src="images/plasmonic_XY_color_uf.png" width="80%"> </p>
+
+<p align="center"> <img src="images/plasmonic_XZ_YZ_color_uf.png" width="80%"></p>
+
+                     
+**Simulation:** The figure shows the optical responses: Reflectance, Transmittance and Absorbance of the 3D
+plasmonic biosensing in water, measured at 81 wavelength points ranging from 1000 nm to 1600 nm. A Fano resonance 
+is observed in the Absorbance at 1280 nm.  SolverM requires less than 1s for *standard resolution*, and 5s for 
+*fine resolution* for the numerical simulation, which is two orders of magnitude  faster than than the method                    
+<a href="https://opg.optica.org/oe/fulltext.cfm?uri=oe-29-22-36201&id=461916"target="_blank"> 
+described in this study. </a>                         
+ 
+<p align="center"> <img src="images/RT_plasmonic_sensor.png" width="30%"></p> 
+                                        
+## <font color='blue'>**3. Spectroscopic/Mueller Ellipsometry**</font>
+
+Spectroscopic/Mueller ellipsometry is a non-dectructive, non-contactct measurement technique to characterize 
+nanostructures.By measuring polarizing states of the sample, Spectroscopic/Mueller ellipsometry is very 
+sensitive to optical responses and has been extensively used for optical metrology applications.
+
+Spectroscopic/Mueller matrix ellipsometry is an indirect measurement method and it requires solving 
+inverse problems to extract optical properties of thin films, to reconstruct nanostructures
+based on experimental data.
+
+In this section,SolverM is used to simulate Spectroscopic/Mueller ellipsometry of thin film, nanostructure
+with various output: Psi,Delta, Mueller matrix ellipsometry...
+
+
+### <font color='steelblue'>**3.1 Spectroscopic Ellipsometry**</font>
+
+**Thin film**
+
+
+Spectroscopic Ellipsometry measures the polarization change described by the ratio of 
+the reflectivity for p-polarized light (Rp) to that for s-polarized light (Rs).
+This ratio, a complex quantity, is expressed using the ellipsometric parameters Ψ (Psi) and Δ (Delta). 
+
+<p>ρ = R<sub>p</sub> / R<sub>s</sub> = tan(Ψ) exp(i.Δ)</p>
+
+The figure below presents the ellipsometric parameters Ψ (Psi) and Δ (Delta) for a SiO₂ film as a 
+function of film thickness, measured at a wavelength of 633 nm, an angle of incidence (AOI) of 70°, 
+and an azimuth angle of 0°
+
+<p align="center"> <img src="images/SiO2_film_Psi_Delta.png" width="70%"></p> 
+
+
+An alternative representation of the ellipsometric parameters is the 4x4 Mueller matrix, 
+which is derived from the reflection coefficients of p-polarized and s-polarized light.
+
+The next figures show Mueller matrix of SiO2 film measured at a wavelength of 200-1000 nm, 
+an angle of incidence (AOI) of 60°, and an azimuth angle of 0°
+
+<figure style="text-align: center;">
+  <img src="images/SiO2_film_2nm.png" width="50%">
+  <figcaption> Film thickness=2nm</figcaption>
+</figure>
+
+<figure style="text-align: center;">
+  <img src="images/SiO2_film_1000nm.png" width="50%">
+  <figcaption>Film thickness=1000nm</figcaption>
+</figure>
+
+**2D grating**
+
+In this example, SolverM is used to simulate spectroscopic ellipsometry of 2D photoresist structures in 
+**Development of a broadband Mueller matrix ellipsometer as a powerful tool for nanostructure metrology**
+<a href="https://www.sciencedirect.com/science/article/abs/pii/S0040609015001224"target="_blank"> 
+by Liu et al.,2015.</a> 
+
+<p align="center"> <img src="images/2D_resine_barc_f.png" width="50%"></p> 
+
+The optical properties of BARC and photoresist are calculated using Forouhi model and Tauc-Lorentz model, 
+respectively. The Mueller matrix in the following figure is simulated based on a structure with a 
+photoresist thickness of 115 nm, a BARC thickness of 310 nm, and a critical dimension (CD) of 200 nm. 
+It is noted that at azimuth=0, the off-diagonal Mueller ellements are zero.
+
+<p align="center"> <img src="images/2D_resine_barc_MM.png" width="50%"></p> 
+
+
+### <font color='steelblue'>**3.2 Mueller Matrix Ellipsometry**</font>
+
+In this example, SolverM is used to simulate Mueller ellipsometry of 2D structures in 
+**Development of a broadband Mueller matrix ellipsometer as a powerful tool for nanostructure metrology**
+<a href="https://www.sciencedirect.com/science/article/abs/pii/S0040609015001224"target="_blank"> 
+by Liu et al.,2015.</a> 
+
+<p align="center"> <img src="images/2D_HSQ_resin.png" width="60%"></p> 
+
+
+The Cauchy model is used to calculate the refractive index of HSQ resin. 
+In this case, with the azimuth angle of 60°, the off-diagonal Mueller matrix elements are non-zero, 
+resulting in a full Mueller matrix.
+
+<p align="center"> <img src="images/2D_HSQ_resin_MM.png" width="60%"></p> 
+
+
+In another example, we reproduce the Mueller matrix obtained from ellipsometry measurements across a 
+wide range of azimuth angles for 2D Si gratings, adapted from **Comparison of spectroscopic Mueller polarimetry, standard 
+scatterometry, and real space imaging techniques (SEM and 3D-AFM) for dimensional characterization 
+of periodic structures**
+<a href="https://www.researchgate.net/publication/315804617_Comparison_of_spectroscopic_Mueller_polarimetry_standard_scatterometry_and_real_space_imaging_techniques_SEM_and_3D-AFM_for_dimensional_characterization_of_periodic_structures"target="_blank"> 
+by Martino et al.,SPIE Proc,2008.</a>   
+
+<p align="center"><img src="images/Si_grating_MM.png" width="30%"></p> 
+
+**Simulation:** 
+SolverM requires about 1s to compute the Mueller matrix of AOI=45, Azimuth
+=[0, 15, 30, 45, 60, 75, 90].
+
+<p align="center"><img src="images/MM_Si_gratings.png" width="60%"></p> 
+
+## <font color='blue'>**4. Mo/Si multilayer stacks**</font>  
+
+<p align="center"><img src="images/Mo_Si_f.png", width="40%"></p> 
+
+SolverM is used to compute the reflectivity of a molybdenum/silicon (Mo/Si) multilayer stack, 
+commonly employed in current EUV systems. The stack consists of 40 alternating layers of Mo
+and Si, with Mo layers 3 nm thick and Si layers 4 nm thick. 
+The refractive indices of Mo and Si are 0.91943 + 0.00663i and 0.99875 + 0.00183i, respectively.
+
+Reflectivity is calculated as a function of wavelength, ranging from 11 to 16 nm, 
+at an incident angle of 6°. At the operating wavelength of 13.5 nm, the reflectivity reaches 
+approximately 70%
+
+
+<p align="center"><img src="images/Mo_Si_R.png" width="40%"></p> 
+
+## <font color='blue'>**5. Au nanoantenna**</font> 
+
+In this example, we simulate the reflectance/transmitance spectrum of arrays of gold nanobars periodically 
+(square lattice) placed on a silicon substrate. The Au plasmonic structure is designed to target the amide vibrational 
+modes of proteins. For further details, please refer to the research article 
+**Angle-and polarization-dependent collective excitation of plasmonic nanoarrays for surface enhanced 
+infrared spectroscopy** 
+<a href="https://opg.optica.org/oe/fulltext.cfm?uri=oe-19-12-11202&id=214241"target="_blank"> by H.Altug et al.2011.</a>. 
+
+<p align="center"><img src="images/Au_antenna_f.png" width="40%"></p> 
+
+The figure below shows the reflectance of Au nanoantenna with periodic lengths of Px=Py=1750nm, 
+Wx=870nm, Wy=230nm, h=70nm. In the simulation, the refractive index of Au is taken from 
+<a href="https://journals.aps.org/prb/abstract/10.1103/PhysRevB.86.235147"target="_blank"> 
+Olmon et al.,  2012.</a>. The normal-incidence peak response of the Amide I protein is fully observed at wave number of 
+1650 cm-1. 
+
+<p align="center"><img src="images/Au_antenna.png" width="30%"></p> 
+
+
+## <font color='blue'>**6. EUV mask**</font>  
+
+A typical extreme ultraviolet (EUV) mask consists of a TaN absorber layer on Mo/Si multilayers 
+to optimize optical efficiency. Simulating the near field of EUV masks with complex patterns is 
+crucial for computational lithography, as it enables the study of mask effects such as asymmetric shadowing, wavefront deformation, 
+and image contrast variations.
+
+<p align="center"> <img src="images/EUV_mask_f.png" width="60%" ></p> 
+
+SolverM is used to simulate the electric field of an EUV mask with an absorber layer at an angle of 
+incidence (AOI) of 6°, and feature dimensions of wx=wy=50nm,The layer thickness is 
+h=50nm with a periodic length of Px=Py=150nm. The absorber layer is placed on 40 pairs of Mo/Si multilayers,
+where the Mo layer is 3nm thick and the Si layer is 2nm thick. At an incident wavelength of 13.5 nm, 
+the refractive index of the TaN absorber is 0.9385+0.03776𝑖
+Mo is 0.91943+0.00663i, and Si is 0.99875+0.00183i.
+
+**Simulation time**: accelerated by GPU, SolverM computes the near field of the EUV mask in less than 1 second.
+
+
+<p align="center"> <img src="images/EUV_mask_E.png" width="30%" ></p>
+
+## <font color='blue'>**7. GaN super cell**</font>       
+
+<p align="center"><img src="images/GaN_f.png" width="60%" ></p> 
+
+In this example, SolverM is used to simulate the diffraction efficiency at visible wavelengths of μm-scale 3D 
+metasurface arrays. The structure consists GaN cylindrical nanoridges on 
+top of Al2O3 substrate. For more information, refer to  **Global optimization of metasurface designs using statistical learning methods**                   
+<a href="https://www.nature.com/articles/s41598-019-53878-9"target="_blank"> by Elsawy et al., 2019.</a>.  
+
+A customized mask is used to define the GaN super cell pattern.
+
+```python
+
+layer_lth['mask']=customized mask           
+layer_lth['grating']={'eps': e_GaN,'name':'GaN'}
+layer_lth['medium']={'eps': e_air,'name':'air'}  
+                    
+```   
+
+SolverM displays the GaN super cell in pixels (1 pixel =1 nm) for the simulation. 
+
+<p align="center"><img src="images/GaN_XY.png" width="60%" ></p>
+
+
+**Simulation time:** 
+It takes approximately 2s to compute the Transmittance and Diffraction Efficiency for 
+the first order of the TM polarized wave.      
+
+<p align="center">
+  <img src="images/GaN_Trans_DE.png" width="80%" >
+</p> 
+
+## <font color='blue'>**8. Si/Ge metasurfaces for wavelength-selective photodetectors **</font>  
+
+In the example, SolverM is used to simulate the Si/Ge structure for wavelength-selective photodetectors in 
+the research article: **Robust Si/Ge heterostructure metasurfaces as building blocks for wavelength-selective photodetectors**
+<a href="https://pubs.aip.org/aip/apl/article/122/12/121701/2880821"target="_blank"> 
+by J. Schlipf et al., 2023.</a>.
+
+The metasurface photodetector is based on a vertical Si/Ge heterostructure PIN diode 
+fabricated on a silicon-on-insulator (SOI) substrate.
+
+<p align="center"><img src="images/Si_Ge_metasurfaces_XY.png" width="80%" ></p> 
+<p align="center"><img src="images/Si_Ge_metasurfaces_XZ_YZ.png" width="80%" ></p>
+
+The simulation shows a clear absorption peak at 1400 nm with a peak absorption of 70%. 
+
+<p align="center"><img src="images/Si_Ge_metasurfaces.png" width="80%" ></p>
+
+## <font color='blue'>**9. Metagrating deflector **</font> 
+
+A metagrating deflector is designed to maximize light deflection at a desired diffraction order.
+In this example, SolverM is used to simulate a metagrating deflector  comprising a freeform silicon
+pattern with periodic dimensions of Px = 1371 nm and Py = 525 nm. The design is referenced from
+<a href="https://github.com/NanoComp/photonics-opt-testbed"target="_blank">
+Photonics-opt-testbed (2023) </a>.
+
+The goal is to maximize the deflection of normally incident light at a wavelength of 1050 nm at
++1 diffraction order (deflection at a 50° angle).
+
+<p align="center"><img src="images/Metagrating_deflector.png" width="40%" ></p> 
+<p align="center"><img src="images/Metagrating_deflector_Ex.png" width="40%" ></p>
+
+SolverM takes only 0.3 seconds for the forward simulation. The diffraction efficiency obtained is 93.6%, 
+consistent with Meep simulation results. 
+
+## <font color='blue'>**10. Conical diffraction**</font> 
+
+In electromagnetic computations, simulations are typically performed using TE and/or TM polarizations. 
+In this example, SolverM demonstrates its capability to handle the general case of conical diffraction, 
+where polarization is defined by the polarization angle (β). Specifically, β = 0° and 90° correspond to
+TM and TE polarizations, respectively.
+
+The following figures show the diffraction efficiency of a binary dielectric grating for TE, TM, 
+and conical polarizations with a polarization angle of 45°. All simulations are performed at 
+an angle of incidence (AOI) of 10° and an azimuth angle of 30°
+
+<p align="center"><img src="images/conical_diffraction.png" width="60%" ></p> 
+
+<figure style="text-align: center;">
+  <img src="images/conical_diffraction1.png" width="65%">
+  <figcaption> 
+  
+  </figcaption>
+</figure>
+
+The results are consistent with the findings in **Formulation for stable and efficient implementation of 
+the rigorous coupled-wave analysis of binary gratings** 
+<a href="https://opg.optica.org/josaa/abstract.cfm?uri=josaa-12-5-1068"target="_blank">
+by Moharam et al.,1995 </a>.
+
+## <font color='blue'>**11. DistributedBraggReflector**</font> 
+### <font color='steelblue'>**11.1 DBR**</font> 
+A distributed Bragg reflector (DBR) is a multilayer structure comprising of alternating layers of low 
+refractive index and high refractive index. A nearly perfect reflection occurs when the thickness of 
+each layer is close to a quarter of the medium wavelength (nd = λ / 4) and is calculated by
+<a href="https://iopscience.iop.org/article/10.1088/0963-9659/4/5/018/meta"target="_blank">
+Sheppard .,1995 </a>:
+
+<p>
+  $$ R = \left[ \frac{n_o (n_2)^{2N} - n_s (n_1)^{2N}}{n_o (n_2)^{2N} + n_s (n_1)^{2N}} \right]^2 $$
+</p>
+
+where n0, n1,n2, n2 are the respective refractive indices of the reflectance medium, the two alternating 
+materials, and the  substrate; and N is the number of repeated pairs of low/high refractive index material.
+
+The frequency bandwidth Δf0 can be calculated by
+<p>
+  $$ \frac{\Delta f_{0}}{f_{0}} = \frac{4}{\pi} \arcsin \left( \frac{n_{2} - n_{1}}{n_{2} + n_{1}} \right) $$
+</p>
+
+
+<figure style="text-align: center;">
+  <img src="images/DBR.png" width="65%">
+  <figcaption> Reflectance of DBR of diffrent number of SiO2/TiO2 pair. The solid point represents
+   the theoretical reflectance at the central frequency, corresponding to a wavelength of 700 nm 
+  </figcaption>
+</figure>
+
+### <font color='steelblue'>**11.2 High-Q DBR Cavity**</font>
+
+A high-Q microcavity is formed when one layer of a DBR has an anomalous thickness. 
+In this example, SolverM is used to simulate a DBR cavity where the central high-index layer 
+is half a material wavelength thick instead of the usual quarter wavelength. 
+This creates a high-Q mode at the central frequency. 
+
+<figure style="text-align: center;">
+  <img src="images/DBR_cavity.png" width="65%">
+  <figcaption> Reflectance of a high-Q DBR cavity with a cavity layer in the middle of 14 pairs of SiO2/TiO2.
+     
+  </figcaption>
+</figure>
+
+## <font color='blue'>**12. Meta-atom**</font>
+
+Understanding the optical responses of a meta-atom is necessary in designing 
+large metasurfaces. Full-wave simulations of large metasurfaces are often constrained by computational resources. 
+Therefore, the conventional design approach involves creating a library of meta-atoms to map the desired optical 
+responses (e.g., phase shift) to specific meta-atom parameters. In this example, SolverM is used to 
+quickly generate the library of optical responses of meta-atoms.
+
+<figure style="text-align: center;">
+  <img src="images/Meta_atom_f1.png" width="30%">
+  <figcaption> 
+  </figcaption>
+</figure>
+The figures show the imulated transmission and phase data for various nano-post widths W at wavelength=915nm, 
+showing consistency with the research articles **Increasing efficiency of high numerical aperture metasurfaces using the grating averaging technique**
+<a href="https://link.springer.com/content/pdf/10.1038/s41598-020-64198-8.pdf"target="_blank">
+by Arbabi .,2020 </a>:
+
+
+
+<figure style="text-align: center;">
+  <img src="images/Meta_atom_phase1.png" width="50%">
+  <figcaption>
+   Periodic length = 400 nm,  thickness = 500 nm
+</figcaption>
+</figure>
+
+
+<figure style="text-align: center;">
+  <img src="images/Meta_atom_phase.png" width="50%">
+  <figcaption>  
+  Periodic length = 350 nm,  thickness = 590 nm
+  </figcaption>
+</figure>
+
+# <font color='blue'>**II. Optimization**</font> 
+
+# <font color='blue'>**Contact**</font> 
+While SolverM demonstrates impressive performances, it is still in its early stages and requires further development. 
+Please feel free to reach out for more information: 
+  
+**Email:** phamhoanglam.fr@gmail.com
+
+
+<style class="fallback">body{visibility:hidden}</style><script>markdeepOptions={tocStyle:'medium'};</script>
+<!-- Markdeep: --><script src="https://casual-effects.com/markdeep/latest/markdeep.min.js?" charset="utf-8"></script>
